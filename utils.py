@@ -1,8 +1,11 @@
+from cProfile import label
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import os
 import tensorflow as tf
+
+label_map = {'cloudy': 0, 'desert': 1, 'green_area': 2, 'water': 3}
 
 def show_examples(df, n=4):
     # Show one random image from each class in the dataset
@@ -39,11 +42,13 @@ def read_image(image_name, label):
     img = tf.io.read_file('images/' + label + '/' + image_name)
     # Convert the image to float32
     img = tf.image.decode_jpeg(img, channels=3)
-    # This is resized to 224x224 because the MobileNetV2 model takes images of this size as input
-    # Resize the image
+    # MobileNetV2 expects the input to be 224x224
     img = tf.image.resize(img, [224, 224])
+    # Reshape the image to (224, 224, 3) and convert the image to float32
+    img = tf.reshape(img, [224, 224, 3])
     # Normalize the image
     img = img / 255.0  # type: ignore
+    
     return img, label
 
 # Create a function to prepare the dataset
