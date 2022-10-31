@@ -13,8 +13,8 @@ df = pd.read_csv('data.csv')
 train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
 
 # Create the train and test datasets
-train_dataset = prepare_dataset(train_df)
-test_dataset = prepare_dataset(test_df)
+train_dataset = prepare_dataset(train_df, batch_size=32)
+test_dataset = prepare_dataset(test_df, batch_size=32 )
 
 model = model(size=224)
 

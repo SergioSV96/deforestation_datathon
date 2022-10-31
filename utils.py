@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import os
 import tensorflow as tf
 
-label_map = {'cloudy': 0, 'desert': 1, 'green_area': 2, 'water': 3}
+label_names = ['cloudy', 'desert', 'green_area', 'water']
 
 def show_examples(df, n=4):
     # Show one random image from each class in the dataset
@@ -44,23 +44,25 @@ def read_image(image_name, label):
     img = tf.image.decode_jpeg(img, channels=3)
     # MobileNetV2 expects the input to be 224x224
     img = tf.image.resize(img, [224, 224])
-    # Reshape the image to (224, 224, 3) and convert the image to float32
-    img = tf.reshape(img, [224, 224, 3])
     # Normalize the image
     img = img / 255.0  # type: ignore
     
+    # Print the label and the image shape
+    print(label, " - ", img.shape)
+
+    # Integer encode the label    
     return img, label
 
 # Create a function to prepare the dataset
-def prepare_dataset(df):
-    # Create a dataset
+def prepare_dataset(df, batch_size=32):
+    # Create a dataset from the dataframe
     dataset = tf.data.Dataset.from_tensor_slices((df['image_name'].values, df['label'].values))
-    # Map the dataset
+    # Map the read_image function to the dataset
     dataset = dataset.map(read_image)
     # Shuffle the dataset
     dataset = dataset.shuffle(buffer_size=1000)
-    # Batch the dataset
-    dataset = dataset.batch(32)
+    # Create batches
+    dataset = dataset.batch(batch_size)
     # Prefetch the dataset
-    dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
+    dataset = dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
     return dataset
