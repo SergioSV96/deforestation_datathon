@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 import os
 import tensorflow as tf
 
-label_names = ['cloudy', 'desert', 'green_area', 'water']
+# Classes in the dataset
+CLASSES = ['cloudy', 'desert', 'green_area', 'water']
 
 def show_examples(df, n=4):
     # Show one random image from each class in the dataset
@@ -36,6 +37,7 @@ def show_examples(df, n=4):
         plt.title(label)
     plt.show()
 
+
 # Create a function to read the image and return the image and the label
 def read_image(image_name, label):
     # Read the image
@@ -46,19 +48,29 @@ def read_image(image_name, label):
     img = tf.image.resize(img, [224, 224])
     # Normalize the image
     img = img / 255.0  # type: ignore
-    
-    # Print the label and the image shape
-    print(label, " - ", img.shape)
 
-    # Integer encode the label    
     return img, label
+
 
 # Create a function to prepare the dataset
 def prepare_dataset(df, batch_size=32):
     # Create a dataset from the dataframe
     dataset = tf.data.Dataset.from_tensor_slices((df['image_name'].values, df['label'].values))
-    # Map the read_image function to the dataset
+   
+   # Map the read_image function to the dataset
     dataset = dataset.map(read_image)
+
+    # Label encode the labels
+    table = tf.lookup.StaticHashTable(
+        tf.lookup.KeyValueTensorInitializer(tf.constant(CLASSES), tf.range(len(CLASSES))),
+        default_value=-1)
+
+    label_encoder = tf.keras.layers.Lambda(lambda x: table.lookup(x))
+    dataset = dataset.map(lambda image, label: (image, label_encoder(label)))
+
+    # One-hot encode the labels
+    dataset = dataset.map(lambda image, label: (image, tf.one_hot(label, len(CLASSES))))
+
     # Shuffle the dataset
     dataset = dataset.shuffle(buffer_size=1000)
     # Create batches
