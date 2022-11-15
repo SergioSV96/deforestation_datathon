@@ -6,13 +6,17 @@
 # Importing the required libraries
 import os
 import pandas as pd
+from dotenv import load_dotenv
 
 # Download the dataset manually from https://www.kaggle.com/datasets/mahmoudreda55/satellite-image-classification
+
+# Load the environment variables
+load_dotenv()
 
 df = pd.DataFrame(columns=['image_name', 'label'])
 
 # The path to the dataset
-path = 'images/'
+path = os.environ.get('DATASET_PATH')
 
 # The list of classes
 classes = ['cloudy', 'desert', 'green_area', 'water']
@@ -20,7 +24,7 @@ classes = ['cloudy', 'desert', 'green_area', 'water']
 # Looping through the classes
 for class_name in classes:
     # The path to the class
-    class_path = path + class_name + '/'
+    class_path = os.path.join(path, class_name)
 
     # The list of images in the class
     images = os.listdir(class_path)
@@ -28,7 +32,7 @@ for class_name in classes:
     # Looping through the images
     for image in images:
         # Adding the image name and the class name to the dataframe
-        df = df.append({'image_name': image, 'class_name': class_name}, ignore_index=True)
+        df = df.append({'image_name': image, 'label': class_name}, ignore_index=True)
 
 # Saving the dataframe to a csv file
 df.to_csv('data.csv', index=False)

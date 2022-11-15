@@ -6,6 +6,10 @@ from utils import prepare_dataset
 import pandas as pd
 import tensorflow as tf
 import tensorflow_addons as tfa
+from dotenv import load_dotenv
+
+# Load the environment variables
+load_dotenv()
 
 df = pd.read_csv('data.csv')
 
@@ -21,7 +25,7 @@ model = model(size=224)
 
 # Compile the model
 model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001), loss='categorical_crossentropy',
-    metrics=['accuracy', tfa.metrics.F1Score(num_classes=4, average='macro')])
+    metrics=['accuracy', tfa.metrics.F1Score(num_classes=len(df['label'].unique()), average='macro')])
 
 # Train the model
 model.fit(train_dataset, epochs=10, validation_data=test_dataset, verbose=2)
