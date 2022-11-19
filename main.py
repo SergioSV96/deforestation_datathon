@@ -4,12 +4,19 @@ from sklearn.model_selection import train_test_split
 from models import model
 from utils import prepare_dataset
 import pandas as pd
+import numpy as np
 import tensorflow as tf
 import tensorflow_addons as tfa
 import datetime
+from sklearn.utils import class_weight
 
 # Create a dataframe from the csv file
 df = pd.read_csv('train.csv')
+
+class_weights = class_weight.compute_class_weight('balanced', classes=np.unique(df['label']), y=df['label'])
+class_weights = dict(enumerate(class_weights))
+
+print(class_weights)
 
 # Split the data into train and test sets
 train_df, test_df = train_test_split(df, test_size=0.2, random_state=42, stratify=df['label'])
@@ -33,7 +40,7 @@ tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram
 stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_f1_score', patience=50, restore_best_weights=True, mode='max')
 
 # Train the model
-model.fit(train_dataset, epochs=32, validation_data=test_dataset, verbose=2, callbacks=[tensorboard_callback, stop_early])
+model.fit(train_dataset, epochs=32, class_weight=class_weights, validation_data=test_dataset, verbose=2, callbacks=[tensorboard_callback, stop_early])
 
 # Evaluate the model
 model.evaluate(test_dataset)
