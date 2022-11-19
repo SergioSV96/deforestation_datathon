@@ -9,8 +9,17 @@ import tensorflow as tf
 import tensorflow_addons as tfa
 import datetime
 from sklearn.utils import class_weight
-
 import tensorboard_utils
+
+import random
+import numpy as np
+import tensorflow as tf
+
+SEED = 42
+
+random.seed(SEED)
+np.random.seed(SEED)
+tf.random.set_seed(SEED)
 
 # os.system("!rm -rf logs")
 
@@ -23,7 +32,7 @@ class_weights = dict(enumerate(class_weights))
 print(class_weights)
 
 # Split the data into train and test sets
-train_df, test_df = train_test_split(df, test_size=0.2, random_state=42, stratify=df['label'])
+train_df, test_df = train_test_split(df, test_size=0.2, random_state=SEED, stratify=df['label'])
 
 # Batch size
 batch_size = 32
