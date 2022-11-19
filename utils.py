@@ -12,10 +12,14 @@ def read_image(image_path, label):
     img = tf.image.decode_png(img, channels=3)
     # Convert the image to float32 
     img = tf.image.convert_image_dtype(img, dtype=tf.float32)
-    # MobileNetV2 expects the input to be 224x224
-    img = tf.image.resize(img, [224, 224])
+    
+    # MobileNetV2 settings
+    # img = tf.image.resize(img, [224, 224])
+    # tf.keras.applications.mobilenet_v2.preprocess_input(img)
+
+    # ResNet50 settings
     # Normalize the image
-    tf.keras.applications.mobilenet_v2.preprocess_input(img)
+    img = tf.keras.applications.resnet50.preprocess_input(img)
     return img, label
 
 # Create a function to prepare the dataset
