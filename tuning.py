@@ -20,7 +20,7 @@ BATCH_SIZE = 32
 NUM_CLASSES = 3
 SIZE = 224
 
-EPOCHS = 32
+EPOCHS = 100
 
 
 def get_data():
@@ -36,7 +36,7 @@ def get_data():
 def create_model(trial):
     # We optimize the numbers of layers and their units.
     base_model = tf.keras.applications.MobileNetV2(
-    input_shape=(SIZE, SIZE, 3), include_top=False, weights='imagenet')
+        input_shape=(SIZE, SIZE, 3), include_top=False, weights='imagenet')
 
     # Freeze the base model
     base_model.trainable = False
@@ -94,11 +94,17 @@ def objective(trial):
 
     model.compile(optimizer=optimizer, loss="categorical_crossentropy", metrics=["accuracy", f1_score_macro])
 
-    model.fit(train_dataset, epochs=EPOCHS, class_weight=class_weights, validation_data=test_dataset, verbose=2)
+    # Early stopping
+    stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_f1_score', patience=7, restore_best_weights=True, mode='max')
+    # Model fit with checkpoint callback
+    history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, class_weight=class_weights, callbacks=[stop_early], verbose=2)
 
+    history.history['val_f1_score']
+
+    # Evaluate the model on the validation set.
     eval_result = model.evaluate(test_dataset, verbose=0)
 
-    return eval_result[2]
+    return eval_result[2]  # F1 score macro
 
 
 if __name__ == "__main__":
