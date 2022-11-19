@@ -37,7 +37,7 @@ class_weights = dict(enumerate(class_weights))
 train_df, test_df = train_test_split(df, test_size=0.2, random_state=SEED, stratify=df['label'])
 
 # Batch size
-batch_size = 32
+batch_size = 64
 
 # Create the train and test datasets
 train_dataset = utils.prepare_dataset(train_df, batch_size=batch_size, augment=True)
@@ -49,31 +49,60 @@ print(f'Test dataset size: {len(test_dataset)}')
 
 NUM_CLASSES = len(df['label'].unique())
 
-# Create the model
-# model = models.model(len(df['label'].unique()), size=224)
-model = models.MobileNetV2(num_classes=NUM_CLASSES, size=224)
-# model = models.ResNet50(num_classes=NUM_CLASSES, size=224)
+# Take the best model from the tuning script and use it to fine-tune the model.
 
+# Create the base model from the pre-trained (from our transfer learning script) model MobileNet V2
+# Load model with weights
+model = tf.keras.models.load_model('models/transfer_learning/transfer_learning.h5')
+
+# Unfreeze the base model
+model.trainable = True
+
+# Train the model with the new layers
 # Compile the model
-model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.01), loss='categorical_crossentropy',
+model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001), loss='categorical_crossentropy',
     metrics=['accuracy', tfa.metrics.F1Score(num_classes=len(df['label'].unique()), average='macro')])
 
 # Callbacks
-log_dir = f'logs/date_{datetime.datetime.now().strftime("%H:%M:%S")}'
-file_writer_cm = tf.summary.create_file_writer(log_dir + '/cm')  # type: ignore
-
-tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
 stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_f1_score', patience=50, restore_best_weights=True, mode='max')
-cm_callback = tf.keras.callbacks.LambdaCallback(on_epoch_end=lambda epoch, logs: tensorboard_utils.log_confusion_matrix(epoch, logs, model, test_dataset, file_writer_cm))
-callbacks = [tensorboard_callback, stop_early, cm_callback]
+
+callbacks = [stop_early]
 
 # Train the model
-model.fit(train_dataset, epochs=32, class_weight=class_weights, validation_data=test_dataset, verbose=2, callbacks=callbacks)
+history = model.fit(train_dataset, epochs=200, class_weight=class_weights, validation_data=test_dataset, verbose=2, callbacks=callbacks)
 
 # Evaluate the model on the validation set.
 eval_result = model.evaluate(test_dataset, verbose=0)
 
-
-
 # Save the model
-# model.save('model.h5')
+model.save(f'models/tuning/fine_tuned_{np.round(eval_result[2], 4)}.h5') # Save the model with the best F1 score
+
+# Predict on the submission set
+submission_df = pd.read_csv('test.csv')
+
+submission_dataset = utils.prepare_dataset(submission_df, batch_size=batch_size, augment=False, shuffle=False)
+
+predictions = model.predict(submission_dataset)
+
+# Save the predictions to a json file called predictions.json with the following format:
+# {
+#   "target: {
+#       "0": 0,
+#       "1": 2,
+#       "2": 1,
+#       "3": 0,
+#       "4": 1,
+#       ...
+# }
+
+# Create a dictionary with the predictions
+predictions_dict = {}
+
+for i, prediction in enumerate(predictions):
+    predictions_dict[i] = np.argmax(prediction)
+
+# Save the predictions to a json file
+import json
+
+with open('predictions.json', 'w') as f:
+    json.dump(predictions_dict, f)

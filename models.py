@@ -81,6 +81,43 @@ class ResNet50(tf.keras.Model):
 
         return x
 
+class EfficientNetB0(tf.keras.Model):
+    def __init__(self, num_classes, size=224):
+        super(EfficientNetB0, self).__init__()
+        # Create the base model from the pre-trained model MobileNet V2
+        self.base_model = tf.keras.applications.EfficientNetB0(
+            input_shape=(size, size, 3), include_top=False, weights='imagenet')
+
+        # Freeze the base model
+        self.base_model.trainable = False
+
+        # Create new model on top
+        self.global_average_layer = tf.keras.layers.GlobalAveragePooling2D()
+        self.output_layer = tf.keras.layers.Dense(num_classes, activation='softmax')
+
+        self.dense_1 = tf.keras.layers.Dense(1024, activation='relu')
+        self.dropout_1 = tf.keras.layers.Dropout(0.2)
+        self.dense_2 = tf.keras.layers.Dense(512, activation='relu')
+        self.dropout_2 = tf.keras.layers.Dropout(0.2)
+        self.dense_3 = tf.keras.layers.Dense(256, activation='relu')
+        self.dropout_3 = tf.keras.layers.Dropout(0.2)
+
+    def call(self, inputs):
+        x = self.base_model(inputs)
+        x = self.global_average_layer(x)
+
+        # Add dense layers on top
+        x = self.dense_1(x)
+        x = self.dropout_1(x)
+        x = self.dense_2(x)
+        x = self.dropout_2(x)
+        x = self.dense_3(x)
+        x = self.dropout_3(x)
+
+        x = self.output_layer(x)
+
+        return x
+
 def model(num_classes, size=224):
     # Create the base model from the pre-trained model MobileNet V2
     base_model = tf.keras.applications.MobileNetV2(
@@ -106,26 +143,3 @@ def model(num_classes, size=224):
     model = tf.keras.Model(inputs, outputs)
 
     return model
-
-
-# def create_MobileNetV2(num_classes, size, num_dense_units, dropout_prob, num_layers):
-#     base_model = tf.keras.applications.MobileNetV2(
-#     input_shape=(size, size, 3), include_top=False, weights='imagenet')
-
-#     # Freeze the base model
-#     base_model.trainable = False
-
-#     # Create new model on top
-#     inputs = tf.keras.Input(shape=(size, size, 3))
-#     x = base_model(inputs, training=False)
-#     x = tf.keras.layers.GlobalAveragePooling2D()(x)
-
-#     # Add dense layers on top
-#     for i in range(num_layers):
-#         x = tf.keras.layers.Dense(num_dense_units, activation='relu')(x)
-#         x = tf.keras.layers.Dropout(dropout_prob)(x)
-
-#     outputs = tf.keras.layers.Dense(num_classes, activation='softmax')(x)
-#     model = tf.keras.Model(inputs, outputs)
-
-#     return model

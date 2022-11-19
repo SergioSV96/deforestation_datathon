@@ -35,7 +35,7 @@ def get_data(augment=True, batch_size=BATCH_SIZE):
 
     return train_dataset, test_dataset, df
 
-def create_model(trial):
+def create_mobilenetv2(trial):
     # We optimize the numbers of layers and their units.
     base_model = tf.keras.applications.MobileNetV2(
         input_shape=(SIZE, SIZE, 3), include_top=False, weights='imagenet')
@@ -52,6 +52,30 @@ def create_model(trial):
     # Add dense layers on top
     for i in range(n_layers):
         n_units = trial.suggest_int(f'n_units_l{i}', 256, 1024)
+        x = tf.keras.layers.Dense(n_units, activation='relu')(x)
+        dropout_prob = trial.suggest_uniform("dropout_l{}".format(i), 0.2, 0.5)
+        x = tf.keras.layers.Dropout(dropout_prob)(x)
+
+    outputs = tf.keras.layers.Dense(NUM_CLASSES, activation='softmax')(x)
+    return tf.keras.Model(inputs, outputs)
+
+def create_efficientnetb0(trial):
+    # We optimize the numbers of layers and their units.
+    base_model = tf.keras.applications.EfficientNetB0(
+        input_shape=(SIZE, SIZE, 3), include_top=False, weights='imagenet')
+
+    # Freeze the base model
+    base_model.trainable = False
+
+    # Create new model on top
+    inputs = tf.keras.Input(shape=(SIZE, SIZE, 3))
+    x = base_model(inputs, training=False)
+    x = tf.keras.layers.GlobalAveragePooling2D()(x)
+
+    n_layers = trial.suggest_int("n_layers", 1, 3)
+    # Add dense layers on top
+    for i in range(n_layers):
+        n_units = trial.suggest_int("n_units_l{}".format(i), 256, 1024)
         x = tf.keras.layers.Dense(n_units, activation='relu')(x)
         dropout_prob = trial.suggest_uniform("dropout_l{}".format(i), 0.2, 0.5)
         x = tf.keras.layers.Dropout(dropout_prob)(x)
@@ -92,7 +116,7 @@ def objective(trial):
 
     f1_score_macro = tfa.metrics.F1Score(num_classes=len(df['label'].unique()), average='macro')
 
-    model = create_model(trial)
+    model = create_mobilenetv2(trial)
     optimizer = create_optimizer(trial)
 
     model.compile(optimizer=optimizer, loss="categorical_crossentropy", metrics=["accuracy", f1_score_macro])
