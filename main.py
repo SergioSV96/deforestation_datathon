@@ -15,7 +15,8 @@ import random
 import numpy as np
 import tensorflow as tf
 
-from focal_loss import SparseCategoricalFocalLoss, BinaryFocalLoss
+import models
+
 
 SEED = 42
 
@@ -46,8 +47,12 @@ test_dataset = utils.prepare_dataset(test_df, batch_size=batch_size)
 print(f'Train dataset size: {len(train_dataset)}')
 print(f'Test dataset size: {len(test_dataset)}')
 
+NUM_CLASSES = len(df['label'].unique())
+
 # Create the model
-model = models.model(len(df['label'].unique()), size=224)
+# model = models.model(len(df['label'].unique()), size=224)
+# model = models.MobileNetV2(num_classes=NUM_CLASSES, size=224)
+model = models.ResNet50(num_classes=NUM_CLASSES, size=332)
 
 # Compile the model
 model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.01), loss='categorical_crossentropy',
