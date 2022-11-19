@@ -40,6 +40,14 @@ def model(num_classes, size=224):
     x = base_model(inputs, training=False)
     x = tf.keras.layers.GlobalAveragePooling2D()(x)
 
+    # Add dense layers on top
+    x = tf.keras.layers.Dense(1024, activation='relu')(x)
+    x = tf.keras.layers.Dropout(0.2)(x)
+    x = tf.keras.layers.Dense(512, activation='relu')(x)
+    x = tf.keras.layers.Dropout(0.2)(x)
+    x = tf.keras.layers.Dense(256, activation='relu')(x)
+    x = tf.keras.layers.Dropout(0.2)(x)
+
     outputs = tf.keras.layers.Dense(num_classes, activation='softmax')(x)
     model = tf.keras.Model(inputs, outputs)
 

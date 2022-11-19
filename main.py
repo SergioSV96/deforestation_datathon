@@ -7,25 +7,26 @@ import pandas as pd
 import os
 import tensorflow as tf
 import tensorflow_addons as tfa
-from dotenv import load_dotenv
 
-# Load the environment variables
-load_dotenv()
 
+# Create a dataframe from the csv file
 df = pd.read_csv('train.csv')
 
 # Split the data into train and test sets
-train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
+train_df, test_df = train_test_split(df, test_size=0.2, random_state=42, stratify=df['label'])
+
+# Batch size
+batch_size = 32
 
 # Create the train and test datasets
-train_dataset = prepare_dataset(train_df, batch_size=1)
-test_dataset = prepare_dataset(test_df, batch_size=1)
+train_dataset = prepare_dataset(train_df, batch_size=batch_size)
+test_dataset = prepare_dataset(test_df, batch_size=batch_size)
 
 # Create the model
 model = model(len(df['label'].unique()), size=224)
 
 # Compile the model
-model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001), loss='categorical_crossentropy',
+model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.01), loss='categorical_crossentropy',
     metrics=['accuracy', tfa.metrics.F1Score(num_classes=len(df['label'].unique()), average='macro')])
 
 # Train the model
