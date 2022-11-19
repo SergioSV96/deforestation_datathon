@@ -15,8 +15,6 @@ import random
 import numpy as np
 import tensorflow as tf
 
-from focal_loss import SparseCategoricalFocalLoss, BinaryFocalLoss
-
 SEED = 42
 
 random.seed(SEED)
@@ -47,15 +45,11 @@ print(f'Train dataset size: {len(train_dataset)}')
 print(f'Test dataset size: {len(test_dataset)}')
 
 # Create the model
-model = models.model(len(df['label'].unique()), size=224)
+model = models.Model(num_classes=len(df['label'].unique()), size=224)
 
 # Compile the model
 model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.01), loss='categorical_crossentropy',
     metrics=['accuracy', tfa.metrics.F1Score(num_classes=len(df['label'].unique()), average='macro')])
-
-# model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.01), loss='binary_crossentropy',
-#     metrics=['accuracy', tfa.metrics.F1Score(num_classes=len(df['label'].unique()), average='macro')])
-
 
 # Callbacks
 log_dir = f'logs/date_{datetime.datetime.now().strftime("%H:%M:%S")}'
