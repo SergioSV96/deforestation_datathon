@@ -1,6 +1,5 @@
 images/
 train_test_data/
-logs/
 .vscode/
 model.h5
 
