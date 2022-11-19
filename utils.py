@@ -45,9 +45,7 @@ def read_image(image_path, label):
     # MobileNetV2 expects the input to be 224x224
     img = tf.image.resize(img, [224, 224])
     # Normalize the image
-    img = img / 255.0 #type: ignore
-
-    print('Tamaño:', img.shape)
+    tf.keras.applications.mobilenet_v2.preprocess_input(img)
 
     return img, label
 
