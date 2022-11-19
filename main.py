@@ -51,8 +51,8 @@ NUM_CLASSES = len(df['label'].unique())
 
 # Create the model
 # model = models.model(len(df['label'].unique()), size=224)
-# model = models.MobileNetV2(num_classes=NUM_CLASSES, size=224)
-model = models.ResNet50(num_classes=NUM_CLASSES, size=332)
+model = models.MobileNetV2(num_classes=NUM_CLASSES, size=224)
+# model = models.ResNet50(num_classes=NUM_CLASSES, size=224)
 
 # Compile the model
 model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.01), loss='categorical_crossentropy',
@@ -61,12 +61,14 @@ model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.01), loss='cate
 # Callbacks
 log_dir = f'logs/date_{datetime.datetime.now().strftime("%H:%M:%S")}'
 file_writer_cm = tf.summary.create_file_writer(log_dir + '/cm')  # type: ignore
+
 tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
 stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_f1_score', patience=50, restore_best_weights=True, mode='max')
 cm_callback = tf.keras.callbacks.LambdaCallback(on_epoch_end=lambda epoch, logs: tensorboard_utils.log_confusion_matrix(epoch, logs, model, test_dataset, file_writer_cm))
+callbacks = [tensorboard_callback, stop_early, cm_callback]
 
 # Train the model
-model.fit(train_dataset, epochs=32, class_weight=class_weights, validation_data=test_dataset, verbose=2, callbacks=[tensorboard_callback, stop_early, cm_callback])
+model.fit(train_dataset, epochs=32, class_weight=class_weights, validation_data=test_dataset, verbose=2, callbacks=callbacks)
 
 # Evaluate the model
 model.evaluate(test_dataset)
