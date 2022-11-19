@@ -4,6 +4,7 @@ from sklearn.model_selection import train_test_split
 from models import model
 from utils import prepare_dataset
 import pandas as pd
+import os
 import tensorflow as tf
 import tensorflow_addons as tfa
 from dotenv import load_dotenv
@@ -11,17 +12,17 @@ from dotenv import load_dotenv
 # Load the environment variables
 load_dotenv()
 
-df = pd.read_csv('data.csv')
+df = pd.read_csv('train.csv')
 
 # Split the data into train and test sets
 train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
 
 # Create the train and test datasets
-train_dataset = prepare_dataset(train_df, batch_size=32)
-test_dataset = prepare_dataset(test_df, batch_size=32)
+train_dataset = prepare_dataset(train_df, batch_size=1)
+test_dataset = prepare_dataset(test_df, batch_size=1)
 
 # Create the model
-model = model(size=224)
+model = model(len(df['label'].unique()), size=224)
 
 # Compile the model
 model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001), loss='categorical_crossentropy',

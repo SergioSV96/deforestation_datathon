@@ -27,7 +27,7 @@ import tensorflow as tf
 
 #         return x
 
-def model(size=224):
+def model(num_classes, size=224):
     # Create the base model from the pre-trained model MobileNet V2
     base_model = tf.keras.applications.MobileNetV2(
         input_shape=(size, size, 3), include_top=False, weights='imagenet')
@@ -40,7 +40,7 @@ def model(size=224):
     x = base_model(inputs, training=False)
     x = tf.keras.layers.GlobalAveragePooling2D()(x)
 
-    outputs = tf.keras.layers.Dense(4, activation='softmax')(x)
+    outputs = tf.keras.layers.Dense(num_classes, activation='softmax')(x)
     model = tf.keras.Model(inputs, outputs)
 
     return model
