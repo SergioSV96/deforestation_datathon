@@ -16,11 +16,10 @@ def read_image(image_path, label):
     img = tf.image.resize(img, [224, 224])
     # Normalize the image
     tf.keras.applications.mobilenet_v2.preprocess_input(img)
-
     return img, label
 
 # Create a function to prepare the dataset
-def prepare_dataset(df, batch_size=32):
+def prepare_dataset(df, batch_size=32, augment=False):
     # Get the classes from the dataframe
     classes = df['label'].unique()
     # Create a dataset from the dataframe
@@ -29,8 +28,21 @@ def prepare_dataset(df, batch_size=32):
     dataset = dataset.map(read_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
     # One-hot encode the labels
     dataset = dataset.map(lambda image, label: (image, tf.one_hot(label, len(classes))), num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    # Use data augmentation only on the training set
+    if augment:
+        # Add data augmentation to the original dataset
+        augmentation_techniques = [tf.image.random_flip_left_right, tf.image.random_flip_up_down, tf.image.rot90]
+        augmented_datasets = []
+        for technique in augmentation_techniques:
+            augmented_dataset = dataset.map(lambda image, label: (technique(image), label), num_parallel_calls=tf.data.experimental.AUTOTUNE)
+            augmented_datasets.append(augmented_dataset)
+        # Concatenate the augmented datasets
+        for augmented_dataset in augmented_datasets:
+            dataset = dataset.concatenate(augmented_dataset)
+    else:
+        augmentation_techniques = []
     # Shuffle the dataset
-    dataset = dataset.shuffle(buffer_size=len(df), seed=42)
+    dataset = dataset.shuffle(buffer_size=len(df))
     # Cache the dataset
     dataset = dataset.cache()
     # Create batches

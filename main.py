@@ -38,8 +38,12 @@ train_df, test_df = train_test_split(df, test_size=0.2, random_state=SEED, strat
 batch_size = 32
 
 # Create the train and test datasets
-train_dataset = utils.prepare_dataset(train_df, batch_size=batch_size)
+train_dataset = utils.prepare_dataset(train_df, batch_size=batch_size, augment=True)
 test_dataset = utils.prepare_dataset(test_df, batch_size=batch_size)
+
+# Print the size of the train and test datasets
+print(f'Train dataset size: {len(train_dataset)}')
+print(f'Test dataset size: {len(test_dataset)}')
 
 # Create the model
 model = models.model(len(df['label'].unique()), size=224)
