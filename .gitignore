@@ -1,4 +1,6 @@
 images/
+train_test_data/
+logs/
 .vscode/
 
 # Byte-compiled / optimized / DLL files

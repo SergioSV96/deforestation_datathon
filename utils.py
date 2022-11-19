@@ -2,7 +2,6 @@ from cProfile import label
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import os
 import tensorflow as tf
 
 # Create a function to read the image and return the image and the label
